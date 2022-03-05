@@ -1,0 +1,6 @@
+name "doge-rewrite"
+description "Rewrite thingy"
+authors "4984#4984" "GoodDoge#9968"
+copyright "Copyright © 2022, Shaw Summa"
+license "MIT"
+maintainer "doge/app.d"

@@ -1,0 +1,24 @@
+%time 100ms
+%depth 3
+
+rule rs1 : rs2 rs3 {
+    %time 50ms
+    %depth 1
+
+    r1l -> r1r
+    r2l -> r2r
+    r3l -> r3r
+    r4l -> r4r
+    r5l -> r5r
+}
+
+rule rs2 {
+    r6l -> r6r
+    r7l -> r7r
+    r8l -> r8r
+    r9l -> r9r
+}
+
+rule rs3 : rs2 {
+    r10l -> r10r
+}
