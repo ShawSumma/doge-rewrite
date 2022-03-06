@@ -2,30 +2,42 @@ module doge.parse;
 import std.stdio;
 import doge.ast;
 
+// TODO: line numbers in error messages in parser
+/// single string parser, constructed once per program
 class Parser
 {
+    /// the source from the current position onwards
     string src;
+    /// the location of src[0]
     Location loc;
 
+    // TODO: support filenames in errors
+    /// construct a parser from a string
     this(string txt)
     {
         src = txt;
         loc = Location(1, 1);
     }
 
+    /// have we run out of input
     bool done()
     {
         return src.length == 0;
     }
 
+    /// the first character not used
+    /// does not return '\0' on end of input
     char peek()
     {
         assert(!done);
         return src[0];
     }
 
+    /// skip the first character
+    /// shifts source location to reflect this change
     void skip()
     {
+        // TODO: think about '\r' and '\t'
         if (peek == '\n')
         {
             loc.line += 1;
@@ -35,9 +47,14 @@ class Parser
         {
             loc.column += 1;
         }
+        // when in an index $ means the length
+        // so thing[1 .. $] means thing[1 .. thing.length]
+        // this just pops a char from the front
+        // basically a ptr++, length--; 
         src = src[1 .. $];
     }
 
+    /// read a char, skip it
     char read()
     {
         char ret = peek;
@@ -45,6 +62,8 @@ class Parser
         return ret;
     }
 
+    /// if the next char matches ch then read it
+    /// returns weather it matched
     bool match(char ch)
     {
         if (peek == ch)
@@ -58,13 +77,17 @@ class Parser
         }
     }
 
+    /// skip whitespace until the end of file or a non space char
+    /// consumes newlines as well as spaces and tabs
     void skipLine()
     {
+        // TODO: use a better check for spaces, this wont work for '\r'
         while (!done && (match(' ') || match('\n') || match('\t')))
         {
         }
     }
 
+    /// skip spaces and tabs until the next char is not one
     void skipSpace()
     {
         while (!done && (match(' ') || match('\t')))
@@ -72,7 +95,9 @@ class Parser
 
         }
     }
-
+    
+    /// reads the next word 
+    /// words are defined as anything that is not a space tab or newline
     string readWord()
     {
         skipSpace;
@@ -84,6 +109,8 @@ class Parser
         return ret;
     }
 
+    /// reads a pragma until newline
+    /// skip the percent BEFORE calling this
     Pragma readPragma()
     {
         string[] words;
@@ -97,6 +124,9 @@ class Parser
         return Pragma(words);
     }
 
+    // TODO: support pragmas after rulesets or rules 
+    /// read pragmas all in a row
+    /// this only reads at the top of a file or block
     Pragma[] readPragmas()
     {
         Pragma[] ret;
@@ -109,12 +139,16 @@ class Parser
         return ret;
     }
 
+    /// read a single rule from 
+    /// the array is for if <-> or <=> is used as they are actually two rules
     Rule[] readRule()
     {
         Rule[] ret;
         string s1 = readWord;
         string op = readWord;
         string s2 = readWord;
+        // you need to put spaces arround the rule input and output
+        // TODO: support "x"->"y" style escaping
         switch (op)
         {
         default:
@@ -132,10 +166,15 @@ class Parser
         return ret;
     }
 
+    // TODO: make this not take a name, will require work in ast
+    /// reads a ruleset
+    /// the word rule and its name should have been already skiped here
+    /// needs a name for the RuleSet constructor
     RuleSet readRuleBody(string name)
     {
         RuleSet ret = RuleSet(name);
         skipSpace;
+        // if we have colon we read the next rules
         if (match(':'))
         {
             while (peek != '{')
@@ -149,12 +188,16 @@ class Parser
                 }
             }
         }
+        // no need to skipSpace here
+        // colon or not there should be a curly brace here
         if (!match('{'))
         {
             throw new Exception("expected `{` not `" ~ peek ~ "`");
         }
+        // pragmas first
         ret.pragmas = readPragmas();
         skipLine;
+        // rules next
         while (peek != '}')
         {
             if (done)
@@ -169,14 +212,19 @@ class Parser
         return ret;
     }
 
+    /// read a whole progrea
     Program readProgram()
     {
+        // pragmas first
         Pragma[] pragmas = readPragmas();
         Program ret = Program(pragmas);
+        // read until we have no more to read
         while (!done)
         {
             skipLine;
             string word = readWord();
+            // TODO: add different things to rules
+            // this allows for more types of statments than just rule
             switch (word)
             {
             case "rule":
