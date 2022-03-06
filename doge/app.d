@@ -12,14 +12,18 @@ void main(string[] args)
     }
     string src = args[1].readText;
     Program prog = new Parser(src).readProgram;
-    // writeln(prog);
     size_t n = 0;
     Executor executor = new Executor(prog, [
-        "exec": (string src) {
+        "count": delegate (string src) {
             n += 1;
-            // writeln("exec: ", src);
+        },
+        "echo": delegate (string src) {
+            writeln(src);
         },
     ]);
     executor.walk(args[2]);
-    writeln(n);
+    if (n != 0)
+    {
+        writeln(n);
+    }
 }

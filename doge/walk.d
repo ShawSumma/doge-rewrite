@@ -70,7 +70,8 @@ class Executor
                         }
                     }
                     todo ~= src[0..index] ~ rule.output ~ src[index+rule.input.length..$];
-                    continue big;
+                    index += 1;
+                    continue small;
                 }
             }
             foreach (rule; rs.nextRules)

@@ -1,0 +1,6 @@
+rule atob {
+    %run count
+    a -> b
+}
+
+rule start : atob {}
