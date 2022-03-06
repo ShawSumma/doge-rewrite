@@ -55,25 +55,27 @@ class Executor
     {
         // cache the thens, this may not matter
         Thunk[] thens = then[rs.name];
+        StringSet* set = rs.name in done; 
         while (todo.length != 0)
         {
             // TODO: optimize this, it is memory intensive
-            // pop the front of todo
             string src = todo[0];
-            // the $ is the length of todo here
-            todo = todo[1..$];
             // if we already are processing this string, dont redo
-            if (src in done[rs.name])
+            if (src in *set)
             {
+                // pop the front of todo
+                // the $ is the length of todo here
+                todo = todo[1..$];
                 continue;
             }
             // add it to the processing strings for this rule
-            done[rs.name][src] = null;
+            (*set)[src] = null;
             // we found a new string, call our callbacks
             foreach (func; thens)
             {
                 func(src);
             }
+            bool first = true;
             // for all rules, run them on the string
             foreach (rule; rs.rules)
             {
@@ -100,7 +102,6 @@ class Executor
                     // our new string
                     todo ~= src[0..index] ~ rule.output ~ src[index+rule.input.length..$];
                     index += 1;
-                    continue small;
                 }
             }
             // run all the next rules
