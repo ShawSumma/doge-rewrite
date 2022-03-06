@@ -1,5 +1,5 @@
 rule numbers {
-    %run count
+    %run dag
     0 -> 1
     1 -> 2
     2 -> 3

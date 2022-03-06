@@ -17,21 +17,39 @@ void main(string[] args)
     // read parse the program
     Program prog = new Parser(src).readProgram;
     size_t n = 0;
+    string dag;
     // oop moment, this is to avoid actual globals
     Executor executor = new Executor(prog, [
         // this is a delegate, it is like a function pointer
         // it that also holds variables inside it
-        "count": delegate (string src) {
+        "count": delegate (Match match) {
             n += 1;
         },
-        "echo": delegate (string src) {
-            writeln(src);
+        "echo": delegate (Match match) {
+            if (match.isStart)
+            {
+                return;
+            }
+            writeln(match.outputString);
         },
+        "dag": delegate (Match match) {
+            if (match.isStart)
+            {
+                return;
+            }
+            dag ~= `    "` ~ match.inputString ~ `" -> "` ~ match.outputString ~ `";` ~ '\n';
+        }
     ]);
     executor.walk(args[2]);
     // TODO: think if we want to print this when zero
     if (n != 0)
     {
         writeln(n);
+    }
+    if (dag != null)
+    {
+        writeln(`digraph start {`);
+        writeln(dag);
+        writeln(`}`);
     }
 }

@@ -7,10 +7,22 @@ import doge.ast;
 // TODO: generate dag
 
 /// function that takes a stirng and returns nothing
-alias Thunk = void delegate(string val);
+alias Thunk = void delegate(Match val);
 
 /// hashmap with no values
 alias StringSet = typeof(null)[string];
+
+/// a replacment
+struct Match
+{
+    bool isStart;
+    bool isFirst;
+    string inputString;
+    string outputString;
+    string ruleName;
+    string ruleInput;
+    string ruleOutput;
+}
 
 /// this is oop sadness
 class Executor
@@ -53,28 +65,28 @@ class Executor
     /// walk a ruleset for any given string
     void walk(RuleSet rs, string[] todo)
     {
+        size_t head = 0;
         // cache the thens, this may not matter
         Thunk[] thens = then[rs.name];
         StringSet* set = rs.name in done; 
-        while (todo.length != 0)
+        foreach (src; todo)
         {
-            // TODO: optimize this, it is memory intensive
-            string src = todo[0];
-            // pop the front of todo
-            // the $ is the length of todo here
-            todo = todo[1..$];
-            // if we already are processing this string, dont redo
             if (src in *set)
             {
                 continue;
             }
-            // add it to the processing strings for this rule
             (*set)[src] = null;
-            // we found a new string, call our callbacks
+            Match match = Match(true, true, null, src, rs.name, null, null);
             foreach (func; thens)
             {
-                func(src);
+                func(match);
             }
+        }
+        while (todo.length > head)
+        {
+            // TODO: optimize this, it is memory intensive
+            string src = todo[head++];
+            // we found a new string, call our callbacks
             bool first = true;
             // for all rules, run them on the string
             foreach (rule; rs.rules)
@@ -89,19 +101,35 @@ class Executor
                 size_t max = src.length + 1 - rule.input.length;
                 small: while (index < max)
                 {
+                    scope(exit) index += 1;
                     size_t next = index;
                     foreach (chr; rule.input)
                     {
                         if (chr != src[next++])
                         {
-                            // we did not find it, carry on
-                            index += 1;
                             continue small;
                         }
                     }
                     // our new string
-                    todo ~= src[0..index] ~ rule.output ~ src[index+rule.input.length..$];
-                    index += 1;
+                    string nextStr = src[0..index] ~ rule.output ~ src[index+rule.input.length..$];
+                    if (nextStr in *set)
+                    {
+                        Match match = Match(false, false, src, nextStr, rs.name, rule.input, rule.output); 
+                        foreach (func; thens)
+                        {
+                            func(match);
+                        }
+                    }
+                    else
+                    {
+                        (*set)[nextStr] = null;
+                        Match match = Match(false, true, src, nextStr, rs.name, rule.input, rule.output); 
+                        foreach (func; thens)
+                        {
+                            func(match);
+                        }
+                        todo ~= nextStr;
+                    }
                 }
             }
             // run all the next rules
