@@ -1,6 +1,6 @@
 rule atob {
-    %run count
-    a -> b
+    %run echo count
+    b <- a
 }
 
 rule start : atob {}

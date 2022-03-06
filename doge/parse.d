@@ -50,7 +50,7 @@ class Parser
         // when in an index $ means the length
         // so thing[1 .. $] means thing[1 .. thing.length]
         // this just pops a char from the front
-        // basically a ptr++, length--; 
+        // basically a ptr++, length--;
         src = src[1 .. $];
     }
 
@@ -95,8 +95,8 @@ class Parser
 
         }
     }
-    
-    /// reads the next word 
+
+    /// reads the next word
     /// words are defined as anything that is not a space tab or newline
     string readWord()
     {
@@ -124,7 +124,7 @@ class Parser
         return Pragma(words);
     }
 
-    // TODO: support pragmas after rulesets or rules 
+    // TODO: support pragmas after rulesets or rules
     /// read pragmas all in a row
     /// this only reads at the top of a file or block
     Pragma[] readPragmas()
@@ -139,7 +139,7 @@ class Parser
         return ret;
     }
 
-    /// read a single rule from 
+    /// read a single rule from
     /// the array is for if <-> or <=> is used as they are actually two rules
     Rule[] readRule()
     {
@@ -156,6 +156,10 @@ class Parser
         case "=>":
         case "->":
             ret ~= Rule(s1, s2);
+            break;
+        case "<=":
+        case "<-":
+            ret ~= Rule(s2, s1);
             break;
         case "<=>":
         case "<->":
