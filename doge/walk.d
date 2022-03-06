@@ -60,12 +60,12 @@ class Executor
         {
             // TODO: optimize this, it is memory intensive
             string src = todo[0];
+            // pop the front of todo
+            // the $ is the length of todo here
+            todo = todo[1..$];
             // if we already are processing this string, dont redo
             if (src in *set)
             {
-                // pop the front of todo
-                // the $ is the length of todo here
-                todo = todo[1..$];
                 continue;
             }
             // add it to the processing strings for this rule
